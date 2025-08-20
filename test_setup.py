@@ -16,7 +16,7 @@ def test_imports():
         'faiss',
         'numpy',
         'sklearn',
-        'reportlab'
+ ""        'reportlab'
     ]
     
     print("🔍 Testing package imports...")
