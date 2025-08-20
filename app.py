@@ -494,8 +494,7 @@ if __name__ == '__main__':
     print("Optimized for 200-page PDF documents")
     print("Enhanced summarization with PDF download capability")
     
-    # Railway deployment configuration
+    # Render deployment configuration
     port = int(os.environ.get('PORT', 5000))
-    host = os.environ.get('HOST', '0.0.0.0')
     
-    app.run(host=host, port=port)
+    app.run(host='0.0.0.0', port=port)

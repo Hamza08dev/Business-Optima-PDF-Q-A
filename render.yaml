@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: business-optima-pdf-analysis
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.0
+    plan: free
+    healthCheckPath: /health

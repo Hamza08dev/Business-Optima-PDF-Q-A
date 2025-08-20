@@ -1,6 +1,6 @@
 # Business Optima - AI-Powered PDF Analysis
 
-A sophisticated web application that allows users to upload large PDF documents (up to 200 pages), ask questions about them, and generate comprehensive summaries with PDF download capability. Built with Flask, optimized for memory efficiency, and ready for Railway deployment.
+A sophisticated web application that allows users to upload large PDF documents (up to 200 pages), ask questions about them, and generate comprehensive summaries with PDF download capability. Built with Flask, optimized for memory efficiency, and ready for Render deployment.
 
 ## 🚀 Features
 
@@ -19,7 +19,7 @@ A sophisticated web application that allows users to upload large PDF documents 
 - **Embeddings**: All-MiniLM-L6-v2 (sentence-transformers)
 - **Vector Database**: FAISS (CPU-optimized)
 - **Frontend**: Modern HTML5, CSS3, JavaScript
-- **Deployment**: Railway-ready
+- **Deployment**: Render-ready
 
 ## 📋 Requirements
 
@@ -50,28 +50,27 @@ A sophisticated web application that allows users to upload large PDF documents 
 4. **Open your browser**
    Navigate to `http://localhost:5000`
 
-### Railway Deployment
+### Render Deployment
 
-1. **Install Railway CLI** (optional)
-   ```bash
-   npm install -g @railway/cli
-   ```
+1. **Create Render Account**
+   - Go to [render.com](https://render.com)
+   - Sign up with your GitHub account
 
-2. **Deploy to Railway**
-   ```bash
-   # Login to Railway
-   railway login
-   
-   # Initialize project (if not already done)
-   railway init
-   
-   # Deploy
-   railway up
-   ```
+2. **Connect Repository**
+   - Click "New +" → "Web Service"
+   - Connect your GitHub repository
+   - Render will auto-detect Python
 
-3. **Set environment variables** (in Railway dashboard)
-   - `PORT`: Railway will set this automatically
-   - `HOST`: Railway will set this automatically
+3. **Configure Service**
+   - **Name**: `business-optima-pdf-analysis`
+   - **Environment**: Python
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `python app.py`
+   - **Plan**: Free
+
+4. **Deploy**
+   - Click "Create Web Service"
+   - Render will build and deploy automatically
 
 ## 📁 Project Structure
 
@@ -79,9 +78,7 @@ A sophisticated web application that allows users to upload large PDF documents 
 business_optima/
 ├── app.py                 # Main Flask application with enhanced features
 ├── requirements.txt       # Python dependencies including ReportLab
-├── Procfile             # Railway deployment configuration
-├── runtime.txt          # Python version specification
-├── railway.json         # Railway configuration
+├── render.yaml           # Render deployment configuration
 ├── templates/
 │   └── index.html      # Enhanced frontend template
 └── README.md           # This file
@@ -135,13 +132,13 @@ The application is configured for optimal performance on 16GB RAM systems:
 - **Statistics Display**: Summary length and target information
 - **Easy Download**: One-click PDF generation and download
 
-## 🚀 Railway Deployment Features
+## 🚀 Render Deployment Features
 
-- **Health Check**: `/health` endpoint for monitoring
-- **Auto-restart**: Configurable restart policies
-- **Environment Variables**: Automatic PORT and HOST detection
-- **Build Optimization**: NIXPACKS builder for efficient builds
-- **Timeout Handling**: 5-minute health check timeout
+- **Free Tier**: 750 hours/month, 512MB RAM, 1GB storage
+- **Auto-deploy**: Automatic deployment on every Git push
+- **Health Checks**: Built-in health monitoring
+- **Custom Domain**: Easy custom domain setup
+- **SSL**: Automatic HTTPS certificates
 
 ## 📈 Performance Considerations
 
@@ -166,7 +163,7 @@ The application is configured for optimal performance on 16GB RAM systems:
 - `POST /summarize` - Generate enhanced document summary
 - `POST /download-summary` - Download summary as PDF
 - `GET /status` - Processing status
-- `GET /health` - Health check (Railway)
+- `GET /health` - Health check (Render)
 
 ## 🆕 New Features
 
@@ -204,9 +201,9 @@ The application is configured for optimal performance on 16GB RAM systems:
    - Check PDF is not corrupted
    - Verify PDF contains extractable text
 
-3. **Railway Deployment Issues**
-   - Check build logs in Railway dashboard
-   - Verify environment variables are set
+3. **Render Deployment Issues**
+   - Check build logs in Render dashboard
+   - Verify Python version compatibility
    - Ensure health check endpoint is accessible
 
 4. **PDF Download Issues**
@@ -237,9 +234,9 @@ This project is licensed under the MIT License.
 
 For issues and questions:
 - Check the troubleshooting section
-- Review Railway deployment logs
+- Review Render deployment logs
 - Open an issue in the repository
 
 ---
 
-**Built with ❤️ for efficient PDF analysis, enhanced summarization, and Railway deployment**
+**Built with ❤️ for efficient PDF analysis, enhanced summarization, and Render deployment**
