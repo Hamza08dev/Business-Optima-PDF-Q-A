@@ -7,7 +7,6 @@ import PyPDF2
 import numpy as np
 from sentence_transformers import SentenceTransformer
 import faiss
-import tiktoken
 from typing import List, Dict, Tuple
 import gc
 import time
