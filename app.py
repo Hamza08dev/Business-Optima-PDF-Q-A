@@ -17,6 +17,13 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 import io
 
+# Gemini
+USE_GEMINI = bool(os.environ.get('GOOGLE_API_KEY'))
+if USE_GEMINI:
+	import google.generativeai as genai
+	genai.configure(api_key=os.environ['GOOGLE_API_KEY'])
+	GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-1.5-flash')
+
 app = Flask(__name__)
 CORS(app)
 
@@ -37,8 +44,9 @@ _embedding_model: TextEmbedding | None = None
 def get_embedding_model() -> TextEmbedding:
 	global _embedding_model
 	if _embedding_model is None:
-		# Use a small, strong model; default is "BAAI/bge-small-en-v1.5"
-		_embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5", max_length=512)
+		cache_dir = os.environ.get("FASTEMBED_CACHE_PATH", "models")
+		os.makedirs(cache_dir, exist_ok=True)
+		_embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5", max_length=512, cache_dir=cache_dir)
 	return _embedding_model
 
 
@@ -214,6 +222,20 @@ def create_summary_pdf(summary: str, filename: str = "document_summary.pdf") -> 
 		return None
 
 
+# Helpers for Gemini
+
+def gemini_generate(prompt: str) -> str:
+	if not USE_GEMINI:
+		return ""
+	try:
+		model = genai.GenerativeModel(GEMINI_MODEL)
+		resp = model.generate_content(prompt)
+		return getattr(resp, 'text', '').strip() or ''
+	except Exception as e:
+		print(f"Gemini error: {e}")
+		return ""
+
+
 @app.route('/')
 def index():
 	return render_template('index.html')
@@ -256,10 +278,22 @@ def chat():
 			return jsonify({'error': 'No message provided'}), 400
 		if not chunks or faiss_index is None:
 			return jsonify({'error': 'No document loaded. Please upload a PDF first.'}), 400
-		similar_chunks = search_similar_chunks(query, top_k=3)
+		similar_chunks = search_similar_chunks(query, top_k=5)
 		if not similar_chunks:
 			return jsonify({'response': "I couldn't find relevant information in the document for your question."})
 		context = "\n\n".join([chunk for _, _, chunk in similar_chunks])
+		if USE_GEMINI:
+			prompt = (
+				"You are a helpful assistant answering based only on the provided document context.\n"
+				f"Question: {query}\n\n"
+				"Context from the document (may be truncated):\n"
+				f"{context[:6000]}\n\n"
+				"Answer concisely and cite the most relevant lines from the context."
+			)
+			ans = gemini_generate(prompt)
+			if ans:
+				return jsonify({'response': ans})
+		# Fallback local
 		response = f"Based on the document, here's what I found:\n\n{context[:1000]}..."
 		if len(context) > 1000:
 			response += "\n\n(Response truncated for readability)"
@@ -275,6 +309,33 @@ def summarize():
 		if not chunks:
 			return jsonify({'error': 'No document loaded. Please upload a PDF first.'}), 400
 		start_time = time.time()
+		if USE_GEMINI:
+			# Map: summarize batches of chunks
+			batch_size = 10
+			maps: List[str] = []
+			for i in range(0, len(chunks), batch_size):
+				batch = "\n\n".join(chunks[i:i+batch_size])
+				prompt = (
+					"Summarize the following document excerpts faithfully and concisely in 5-7 bullet points."
+					" Focus on key facts, definitions, results, and takeaways.\n\n"
+					f"Excerpts:\n{batch[:12000]}\n\nBullet Summary:"
+				)
+				part = gemini_generate(prompt)
+				if part:
+					maps.append(part)
+			# Reduce
+			combined = "\n\n".join(maps) if maps else ""
+			if combined:
+				reduce_prompt = (
+					"Merge the following bullet summaries into a cohesive 2-3 page narrative summary."
+					" Preserve important details, avoid repetition, and structure with short paragraphs.\n\n"
+					f"Bullets:\n{combined[:15000]}\n\nNarrative Summary:"
+				)
+				final_summary = gemini_generate(reduce_prompt)
+				if final_summary:
+					end_time = time.time()
+					return jsonify({'summary': final_summary,'processing_time': f"{end_time - start_time:.2f} seconds",'summary_length': len(final_summary),'target_length': MAX_SUMMARY_LENGTH})
+		# Fallback local
 		summary = generate_summary_mapreduce()
 		end_time = time.time()
 		return jsonify({'summary': summary,'processing_time': f"{end_time - start_time:.2f} seconds",'summary_length': len(summary),'target_length': MAX_SUMMARY_LENGTH})
